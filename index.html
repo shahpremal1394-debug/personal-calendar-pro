@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#243b53">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>Personal Calendar Pro</title>
+<style>
+:root{--navy:#243b53;--blue:#3b82f6;--bg:#f3f6fa;--card:#fff;--text:#17212f;--muted:#64748b;--line:#e2e8f0;--green:#16845b;--red:#c2413b}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}
+header{background:var(--navy);color:#fff;padding:22px 18px 18px;border-radius:0 0 22px 22px}
+header h1{font-size:23px;margin:0 0 5px}header p{margin:0;color:#dbeafe;font-size:13px}
+main{max-width:760px;margin:auto;padding:14px 13px 35px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:14px 0}
+.tab{border:1px solid var(--line);border-radius:12px;background:#fff;padding:10px 3px;font-size:12px;font-weight:650;color:var(--navy)}
+.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:12px;box-shadow:0 2px 8px #10203008}
+h2{font-size:17px;margin:0 0 12px}h3{font-size:14px;margin:0 0 9px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;font-size:12px;color:var(--muted);margin:9px 0 5px}
+input,select,textarea{width:100%;border:1px solid #cbd5e1;border-radius:10px;padding:11px;font:inherit;font-size:14px;background:white;color:var(--text)}
+textarea{min-height:70px;resize:vertical}
+button{border:0;border-radius:10px;padding:11px 13px;font:inherit;font-weight:650;cursor:pointer}
+.primary{background:var(--blue);color:#fff;width:100%;margin-top:12px}.secondary{background:#e8eef6;color:var(--navy)}.danger{background:#fee2e2;color:#991b1b}
+.list{display:grid;gap:8px}.item{border:1px solid var(--line);border-radius:12px;padding:11px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start;background:#fff}
+.item small{display:block;color:var(--muted);margin-top:4px;line-height:1.4}.item .actions{display:flex;gap:5px;flex-shrink:0}.item .actions button{padding:7px 9px;font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.stat{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:12px}.stat strong{display:block;font-size:20px;margin-top:4px}.stat span{font-size:12px;color:var(--muted)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.day{padding:9px 0;text-align:center;font-size:12px;border-radius:8px;background:#f8fafc}.day.head{font-weight:700;color:var(--muted);background:transparent}.day.today{background:var(--navy);color:white}.day.marked{outline:2px solid #60a5fa;outline-offset:-2px}
+.notice{font-size:12px;color:var(--muted);line-height:1.5}.empty{padding:14px;text-align:center;color:var(--muted);font-size:13px}
+@media(min-width:600px){.tabs{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header><h1>Personal Calendar Pro</h1><p>Your schedule, expenses and office time — in one place.</p></header>
+<main>
+<div class="tabs">
+<button class="tab active" data-tab="home">Overview</button>
+<button class="tab" data-tab="calendar">Calendar</button>
+<button class="tab" data-tab="expense">Expenses</button>
+<button class="tab" data-tab="office">Office</button>
+</div>
+<section id="home" class="panel active">
+<div class="card"><h2 id="todayTitle">Today</h2><div class="stats">
+<div class="stat"><span>Today's expenses</span><strong id="todaySpend">₹0</strong></div>
+<div class="stat"><span>Upcoming items</span><strong id="upcomingCount">0</strong></div>
+<div class="stat"><span>This month's expenses</span><strong id="monthSpend">₹0</strong></div>
+<div class="stat"><span>Today's work time</span><strong id="workTime">—</strong></div>
+</div></div>
+<div class="card"><h2>Upcoming Schedule</h2><div id="upcomingList" class="list"></div></div>
+<div class="card"><h2>Quick reminder</h2><p class="notice">Notifications can work only when permission is granted and this app is open. Reliable background reminders need an installed/hosted PWA or a native Android app.</p><button class="secondary" id="notifyBtn">Enable notifications</button></div>
+</section>
+<section id="calendar" class="panel">
+<div class="card"><h2>Calendar</h2><div class="grid"><div><label>Month</label><input type="month" id="calendarMonth"></div><div><label>Selected date</label><input type="date" id="eventDate"></div></div>
+<div id="calendarGrid" class="days" style="margin-top:13px"></div>
+</div>
+<div class="card"><h2>Add event or meeting</h2>
+<label>Title</label><input id="eventTitle" placeholder="e.g. Team meeting">
+<div class="grid"><div><label>Type</label><select id="eventType"><option>Meeting</option><option>Appointment</option><option>Personal</option><option>Holiday</option><option>Task</option></select></div><div><label>Time</label><input type="time" id="eventTime"></div></div>
+<label>Reminder (minutes before)</label><select id="eventReminder"><option value="0">At event time</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option></select>
+<label>Notes / location</label><textarea id="eventNotes" placeholder="Optional notes or meeting location"></textarea>
+<button class="primary" id="saveEvent">Save event</button></div>
+<div class="card"><h2>Events on selected date</h2><div id="eventList" class="list"></div></div>
+</section>
+<section id="expense" class="panel">
+<div class="card"><h2>Add daily expense</h2><label>Date</label><input type="date" id="expenseDate">
+<label>Description</label><input id="expenseTitle" placeholder="e.g. Lunch, fuel, groceries">
+<div class="grid"><div><label>Amount (₹)</label><input type="number" min="0" step="0.01" id="expenseAmount" placeholder="0.00"></div><div><label>Category</label><select id="expenseCategory"><option>Food</option><option>Travel</option><option>Shopping</option><option>Bills</option><option>Health</option><option>Office</option><option>Other</option></select></div></div>
+<button class="primary" id="saveExpense">Save expense</button></div>
+<div class="card"><h2>Expense summary</h2><div class="stats"><div class="stat"><span>Selected month total</span><strong id="expenseMonthTotal">₹0</strong></div><div class="stat"><span>Records</span><strong id="expenseCount">0</strong></div></div>
+<label>View month</label><input type="month" id="expenseMonth"></div>
+<div class="card"><h2>Expense records</h2><div id="expenseList" class="list"></div></div>
+</section>
+<section id="office" class="panel">
+<div class="card"><h2>Office time tracker</h2><label>Work date</label><input type="date" id="workDate">
+<div class="grid"><div><label>Check-in</label><input type="time" id="checkIn"></div><div><label>Check-out</label><input type="time" id="checkOut"></div></div>
+<label>Break time (minutes)</label><input type="number" min="0" id="breakMinutes" value="0">
+<label>Notes</label><input id="workNotes" placeholder="e.g. overtime, work from home">
+<button class="primary" id="saveWork">Save office record</button></div>
+<div class="card"><h2>Leave / holiday</h2><label>Date</label><input type="date" id="leaveDate"><div class="grid"><div><label>Type</label><select id="leaveType"><option>Paid leave</option><option>Sick leave</option><option>Casual leave</option><option>Office holiday</option><option>Unpaid leave</option></select></div><div><label>Reason</label><input id="leaveReason" placeholder="Optional"></div></div><button class="primary" id="saveLeave">Save leave</button></div>
+<div class="card"><h2>Office records</h2><div id="workList" class="list"></div></div>
+<div class="card"><h2>Leave records</h2><div id="leaveList" class="list"></div></div>
+</section>
+<div class="card"><h3>Backup & privacy</h3><p class="notice">Your entries are saved in this browser on this device. Clearing browser data, opening in a different browser, or uninstalling/resetting the app may remove them. Export a backup regularly.</p><div class="grid"><button class="secondary" id="exportBtn">Export backup</button><button class="secondary" id="importBtn">Import backup</button></div><input type="file" id="importFile" accept="application/json" hidden></div>
+<p class="notice">Starter version • Offline-first • Keep a backup of important records.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const today=()=>new Date().toLocaleDateString('en-CA');
+const monthNow=()=>today().slice(0,7);
+const keys={events:'pcp_events_v1',expenses:'pcp_expenses_v1',work:'pcp_work_v1',leaves:'pcp_leaves_v1'};
+function get(k){try{return JSON.parse(localStorage.getItem(keys[k])||'[]')}catch{return []}}
+function put(k,v){localStorage.setItem(keys[k],JSON.stringify(v))}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function money(n){return '₹'+Number(n||0).toLocaleString('en-IN',{maximumFractionDigits:2})}
+function showList(id,items,kind){const el=$(id);if(!items.length){el.innerHTML='<div class="empty">No records yet.</div>';return}
+el.innerHTML=items.map(x=>`<div class="item"><div><strong>${esc(x.title||x.type||x.description||'Record')}</strong><small>${esc(x.date||'')} ${esc(x.time||'')} ${x.amount!==undefined?'• '+money(x.amount):''}<br>${esc(x.notes||x.category||x.reason||x.type||'')}</small></div><div class="actions"><button class="danger" data-del="${kind}" data-id="${esc(x.id)}">Delete</button></div></div>`).join('')}
+function saveRecord(kind,obj){let arr=get(kind);arr.push({...obj,id:Date.now().toString()});put(kind,arr);render()}
+function delRecord(kind,id){put(kind,get(kind).filter(x=>x.id!==id));render()}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-del]');if(b&&confirm('Delete this record?'))delRecord(b.dataset.del,b.dataset.id)});
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active');render()});
+['calendarMonth','eventDate','expenseDate','expenseMonth','workDate','leaveDate'].forEach(id=>$(id).value=id==='calendarMonth'||id==='expenseMonth'?monthNow():today());
+$('calendarMonth').addEventListener('change',drawCalendar);
+$('eventDate').addEventListener('change',()=>{drawCalendar();drawEvents()});
+$('saveEvent').onclick=()=>{if(!$('eventTitle').value.trim())return alert('Please enter an event title.');saveRecord('events',{title:$('eventTitle').value.trim(),date:$('eventDate').value||today(),time:$('eventTime').value,type:$('eventType').value,reminder:Number($('eventReminder').value),notes:$('eventNotes').value});$('eventTitle').value='';$('eventNotes').value='';drawEvents()};
+$('saveExpense').onclick=()=>{if(!$('expenseTitle').value.trim()||!$('expenseAmount').value||Number($('expenseAmount').value)<0)return alert('Enter an expense description and valid amount.');saveRecord('expenses',{title:$('expenseTitle').value.trim(),date:$('expenseDate').value||today(),amount:Number($('expenseAmount').value),category:$('expenseCategory').value});$('expenseTitle').value='';$('expenseAmount').value='';};
+$('saveWork').onclick=()=>{saveRecord('work',{date:$('workDate').value||today(),title:'Office time',time:$('checkIn').value+' – '+$('checkOut').value,checkIn:$('checkIn').value,checkOut:$('checkOut').value,breakMinutes:Number($('breakMinutes').value||0),notes:$('workNotes').value});$('workNotes').value='';};
+$('saveLeave').onclick=()=>{saveRecord('leaves',{date:$('leaveDate').value||today(),title:$('leaveType').value,type:$('leaveType').value,reason:$('leaveReason').value});$('leaveReason').value='';};
+$('expenseMonth').addEventListener('change',render);$('notifyBtn').onclick=async()=>{if(!('Notification'in window))return alert('Notifications are not supported in this browser.');const p=await Notification.requestPermission();alert(p==='granted'?'Notifications enabled while the app is open.':'Notification permission was not granted.')};
+function drawCalendar(){const m=$('calendarMonth').value||monthNow(),[y,mo]=m.split('-').map(Number),first=new Date(y,mo-1,1).getDay(),days=new Date(y,mo,0).getDate(),sel=$('eventDate').value||today(),events=get('events');let out=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="day head">${d}</div>`).join('');for(let i=0;i<first;i++)out+='<div class="day"></div>';for(let d=1;d<=days;d++){const date=`${m}-${String(d).padStart(2,'0')}`,cls=['day',date===today()?'today':'',events.some(e=>e.date===date)?'marked':''].filter(Boolean).join(' ');out+=`<button class="${cls}" data-date="${date}">${d}</button>`}$('calendarGrid').innerHTML=out;$('calendarGrid').querySelectorAll('[data-date]').forEach(b=>b.onclick=()=>{$('eventDate').value=b.dataset.date;drawCalendar();drawEvents()})}
+function drawEvents(){const d=$('eventDate').value||today();showList('eventList',get('events').filter(e=>e.date===d).sort((a,b)=>(a.time||'').localeCompare(b.time||'')),'events')}
+function render(){const ev=get('events'),ex=get('expenses'),work=get('work'),leaves=get('leaves'),t=today(),m=monthNow();$('todayTitle').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});$('todaySpend').textContent=money(ex.filter(x=>x.date===t).reduce((a,x)=>a+Number(x.amount),0));$('monthSpend').textContent=money(ex.filter(x=>x.date.startsWith(m)).reduce((a,x)=>a+Number(x.amount),0));$('upcomingCount').textContent=ev.filter(x=>x.date>=t).length;let w=work.filter(x=>x.date===t).at(-1);if(w&&w.checkIn&&w.checkOut){let mins=(()=>{let [a,b]=[w.checkIn,w.checkOut].map(v=>v.split(':').reduce((h,n)=>h*60+Number(n),0));if(b<a)b+=1440;return Math.max(0,b-a-(w.breakMinutes||0))})();$('workTime').textContent=Math.floor(mins/60)+'h '+mins%60+'m'}else $('workTime').textContent='—';
+showList('upcomingList',ev.filter(x=>x.date>=t).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).slice(0,6),'events');
+const em=$('expenseMonth').value||m,monthEx=ex.filter(x=>x.date.startsWith(em));$('expenseMonthTotal').textContent=money(monthEx.reduce((a,x)=>a+Number(x.amount),0));$('expenseCount').textContent=monthEx.length;showList('expenseList',monthEx.sort((a,b)=>b.date.localeCompare(a.date)),'expenses');showList('workList',work.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30),'work');showList('leaveList',leaves.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30),'leaves');drawCalendar();drawEvents()}
+$('exportBtn').onclick=()=>{const data={app:'Personal Calendar Pro',version:1,exportedAt:new Date().toISOString(),events:get('events'),expenses:get('expenses'),work:get('work'),leaves:get('leaves')};const a=document.createElement('a'),url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.href=url;a.download='personal-calendar-backup.json';a.click();URL.revokeObjectURL(url)};
+$('importBtn').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(!d.events||!d.expenses||!d.work||!d.leaves)throw Error();if(!confirm('Import will replace current app records. Export a backup first. Continue?'))return;for(const k of Object.keys(keys))put(k,d[k]||[]);render();alert('Backup imported.')}catch{alert('Could not import this backup file.')}e.target.value=''};
+if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(err => console.warn('Offline setup:', err)));
+}
+render();
+</script>
+</body></html>

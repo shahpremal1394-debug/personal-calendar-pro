@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "Personal Calendar Pro",
+  "short_name": "Personal Calendar",
+  "description": "Personal calendar, daily expenses, office time and reminders.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f6fa",
+  "theme_color": "#243b53",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
